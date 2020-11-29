@@ -25,7 +25,6 @@ trap cat_npm_debug_log ERR
 
 # Look in package.json's engines.node field for a semver range
 semver_range=$(cat $build_dir/package.json | $bp_dir/vendor/jq -r .engines.node)
-
 # Resolve node version using semver.io
 node_version=$(curl --silent --get --data-urlencode "range=${semver_range}" https://semver.io/node/resolve)
 
@@ -47,8 +46,9 @@ else
   status "Resolved node version: $node_version"
 fi
 
-# Download node from Heroku's S3 mirror of nodejs.org/dist
+# ----------------------------------------------------------
 status "Downloading and installing node"
+# ----------------------------------------------------------
 node_url="http://s3pository.heroku.com/node/v$node_version/node-v$node_version-linux-x64.tar.gz"
 curl $node_url -s -L -o - | tar xzf - -C $build_dir
 
@@ -58,10 +58,14 @@ mv $build_dir/node-v$node_version-linux-x64 $build_dir/vendor/node
 chmod +x $build_dir/vendor/node/bin/*
 PATH=$build_dir/vendor/node/bin:$PATH
 
+# ----------------------------------------------------------
 status "Adding boot script"
+# ----------------------------------------------------------
 cp $bp_dir/bin/boot.sh $build_dir
 
+# ----------------------------------------------------------
 status "Copying configs"
+# ----------------------------------------------------------
 mkdir -p $build_dir/config
 cp $bp_dir/config/htpasswd.rb $build_dir/config
 cp $bp_dir/config/mime.types $build_dir/config
@@ -70,45 +74,58 @@ if [[ ! -f $build_dir/config/nginx.conf.erb ]]; then
 else
   status "Custom nginx config found"
 fi
-
 cd $build_dir
 
+# ----------------------------------------------------------
 status "Downloading and installing pcre"
+# ----------------------------------------------------------
 pcre_version=${PCRE_VER:-8.36}
 curl "http://de.osdn.net/frs/g_redir.php?m=rwthaachen&f=pcre/pcre/$pcre_version/pcre-$pcre_version.tar.gz" -s -L | tar xzf - -C $build_dir/vendor
 mkdir $build_dir/vendor/pcre
 
+# ----------------------------------------------------------
 status "Downloading and installing nginx"
+# ----------------------------------------------------------
 nginx_version=${NGINX_VER:-1.13.8}
 nginx_url="http://nginx.org/download/nginx-$nginx_version.tar.gz"
 curl $nginx_url -s -o - | tar xzf - -C $build_dir/vendor
 mkdir $build_dir/vendor/nginx
 cd $build_dir/vendor/nginx-$nginx_version
-./configure --with-pcre=$build_dir/vendor/pcre-${pcre_version} --with-pcre-opt="--prefix=$build_dir/vendor/pcre" --with-http_ssl_module --prefix=$build_dir/vendor/nginx 2>&1 | indent
+./configure --with-pcre=$build_dir/vendor/pcre-${pcre_version} --with-pcre-opt="--prefix=$build_dir/vendor/pcre" --with-http_ssl_module --prefix=$build_dir/vendor/nginx 2>&1 1>/dev/null | indent
 make install 2>&1 1>/dev/null | indent
 cd $build_dir
 
-# If node_modules directory is checked into source control then
-# rebuild any native deps. Otherwise, restore from the build cache.
+# caching
 if test -d $build_dir/node_modules; then
+  # ----------------------------------------------------------
   status "Found existing node_modules directory; skipping cache"
   status "Rebuilding any native dependencies"
-  npm rebuild 2>&1 | indent
+  # ----------------------------------------------------------
+  yarn rebuild 2>&1 | indent
 elif test -d $cache_dir/node/node_modules; then
+  # ----------------------------------------------------------
   status "Restoring node_modules directory from cache"
+  # ----------------------------------------------------------
   cp -r $cache_dir/node/node_modules $build_dir/
 
   if test -f $cache_dir/node/.heroku/node-version && [ $(cat $cache_dir/node/.heroku/node-version) != "$node_version" ]; then
+    # ----------------------------------------------------------
     status "Node version changed since last build; rebuilding dependencies"
-    npm rebuild 2>&1 | indent
+    # ----------------------------------------------------------
+    yarn rebuild 2>&1 | indent
   fi
 fi
 
+# ----------------------------------------------------------
 status "Installing yarn"
-npm install yarn --quiet --userconfig $build_dir/.npmrc 2>&1 | indent
+# ----------------------------------------------------------
+npm install yarn --silent --userconfig $build_dir/.npmrc 2>&1 | indent
 PATH=$build_dir/node_modules/yarn/bin:$PATH
 
+# ----------------------------------------------------------
+echo ""
 status "Installing dependencies"
+# ----------------------------------------------------------
 # Make npm output to STDOUT instead of its default STDERR
 yarn install | indent
 
@@ -135,12 +152,18 @@ fi
 # Copy goodies to the cache
 cp -r $build_dir/.heroku $cache_dir/node
 
-status "Cleaning up node-gyp and npm artifacts"
+# status "Cleaning up node-gyp and npm artifacts"
 rm -rf "$build_dir/.node-gyp"
 rm -rf "$build_dir/.npm"
 
+# ----------------------------------------------------------
 status "Building application $build_env distribution"
+# ----------------------------------------------------------
 yarn build --configuration $build_env | indent
 
+# ----------------------------------------------------------
 status "Cleaning workspace"
+# ----------------------------------------------------------
 rm -rf $build_dir/node_modules
+rm -rf $build_dir/src
+rm -rf $build_dir/e2e
