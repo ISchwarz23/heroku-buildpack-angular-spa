@@ -1,8 +1,8 @@
 # Heroku Buildpack for Angular Applications
 
-This buildpack will work out-of-the-box with Angular applications. It installs node, nginx and generates a production build with Gulp.
+This buildpack will work out-of-the-box with Angular applications. It installs node, nginx and builds you application using yarn.
 
-Thanks to our own Tony Coconate for his work on a custom [buildpack](https://github.com/tonycoco/heroku-buildpack-ember-cli) for Ember CLI, which this is ~~heavily~~ entirely based on.
+Thanks to our own Tony Coconate for his work on a custom [buildpack](https://github.com/tonycoco/heroku-buildpack-ember-cli) for Ember CLI, which this is entirely based on.
 
 ## Usage
 
@@ -32,11 +32,15 @@ Set the number of workers for Nginx (Default: `4`):
 
 Set an API proxy URL:
 
-    heroku config:set API_URL=http://api.example.com/
+    heroku config:set API_1_URL=http://api.example.com/
+    heroku config:set API_2_URL=http://api.example.com/
+    heroku config:set API_3_URL=http://api.example.com/
 
-Set your API's prefix path (Default: `/api/`):
+Set your API's proxy route (Default: `/api(1,2,3)/`):
 
-    heroku config:set API_PREFIX_PATH=/api/
+    heroku config:set API_1_PROXY_PATH=/foo/
+    heroku config:set API_2_PROXY_PATH=/bar/
+    heroku config:set API_3_PROXY_PATH=/baz/
 
 *Note that the trailing slashes are important. For more information about API proxies and avoiding CORS, [read this](http://oskarhane.com/avoid-cors-with-nginx-proxy_pass).*
 
@@ -61,7 +65,7 @@ Need to make a custom nginx configuration change? No problem. In your Angular ap
 
 ### Caching
 
-The Angular buildpack caches your npm and bower dependencies be default. This is similar to the [Heroku Buildpack for Node.js](https://github.com/heroku/heroku-buildpack-nodejs). This makes typical deployments much faster.
+The Angular buildpack caches your npm and bower dependencies by default. This is similar to the [Heroku Buildpack for Node.js](https://github.com/heroku/heroku-buildpack-nodejs). This makes typical deployments much faster.
 
 To [purge the cache](https://github.com/heroku/heroku-repo#purge_cache) and reinstall all dependencies, run:
 
