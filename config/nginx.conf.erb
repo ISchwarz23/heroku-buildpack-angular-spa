@@ -36,7 +36,7 @@ http {
     listen <%= ENV["PORT"] || 80 %>;
     server_name _;
     keepalive_timeout 5;
-    root <%= ENV["ROOT_DIR"] %>;
+    root <%= ENV["APP_ROOT_DIR"] %>;
     index index.html;
 
     <% if ENV["FORCE_HTTPS"] %>
@@ -50,15 +50,39 @@ http {
       auth_basic_user_file <%= "#{ENV["HOME"]}/config/htpasswd" %>;
     <% end %>
 
-    <% if ENV["API_URL"] %>
-      location <%= ENV["API_PREFIX_PATH"] || "/api/" %> {
-        proxy_pass <%= ENV["API_URL"] %>;
+    <% if ENV["API_1_URL"] %>
+      location <%= ENV["API_1_PROXY_PATH"] || "/api1/" %> {
+        proxy_pass <%= ENV["API_1_URL"] %>;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-NginX-Proxy true;
         proxy_ssl_session_reuse off;
         proxy_redirect off;
-        <% if ENV["NGINX_DEBUG"] %>add_header X-SPA-API-Proxy on;<% end %>
+        <% if ENV["NGINX_DEBUG"] %>add_header X-SPA-API-1-Proxy on;<% end %>
+      }
+    <% end %>
+
+    <% if ENV["API_2_URL"] %>
+      location <%= ENV["API_2_PROXY_PATH"] || "/api2/" %> {
+        proxy_pass <%= ENV["API_2_URL"] %>;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-NginX-Proxy true;
+        proxy_ssl_session_reuse off;
+        proxy_redirect off;
+        <% if ENV["NGINX_DEBUG"] %>add_header X-SPA-API-2-Proxy on;<% end %>
+      }
+    <% end %>
+
+    <% if ENV["API_3_URL"] %>
+      location <%= ENV["API_3_PROXY_PATH"] || "/api3/" %> {
+        proxy_pass <%= ENV["API_3_URL"] %>;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-NginX-Proxy true;
+        proxy_ssl_session_reuse off;
+        proxy_redirect off;
+        <% if ENV["NGINX_DEBUG"] %>add_header X-SPA-API-3-Proxy on;<% end %>
       }
     <% end %>
 
