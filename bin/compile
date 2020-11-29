@@ -85,8 +85,7 @@ curl $nginx_url -s -o - | tar xzf - -C $build_dir/vendor
 mkdir $build_dir/vendor/nginx
 cd $build_dir/vendor/nginx-$nginx_version
 ./configure --with-pcre=$build_dir/vendor/pcre-${pcre_version} --with-pcre-opt="--prefix=$build_dir/vendor/pcre" --with-http_ssl_module --prefix=$build_dir/vendor/nginx 2>&1 | indent
-# make install  2>&1 | indent
-make install | indent
+make install 2>&1 1>/dev/null | indent
 cd $build_dir
 
 # If node_modules directory is checked into source control then
@@ -98,9 +97,6 @@ if test -d $build_dir/node_modules; then
 elif test -d $cache_dir/node/node_modules; then
   status "Restoring node_modules directory from cache"
   cp -r $cache_dir/node/node_modules $build_dir/
-
-  status "Pruning cached dependencies not specified in package.json"
-  npm prune 2>&1 | indent
 
   if test -f $cache_dir/node/.heroku/node-version && [ $(cat $cache_dir/node/.heroku/node-version) != "$node_version" ]; then
     status "Node version changed since last build; rebuilding dependencies"
@@ -127,7 +123,6 @@ echo $node_version > $build_dir/.heroku/node-version
 
 # Purge node-related cached content, being careful not to purge the top-level
 # cache, for the sake of heroku-buildpack-multi apps.
-rm -rf $cache_dir/node_modules # (for apps still on the older caching strategy)
 rm -rf $cache_dir/node
 mkdir -p $cache_dir/node
 
