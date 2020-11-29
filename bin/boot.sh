@@ -7,6 +7,4 @@ mkdir -p $HOME/logs/nginx
 touch $HOME/logs/nginx/access.log $HOME/logs/nginx/error.log
 
 (tail -f -n 0 $HOME/logs/nginx/*.log &)
-
-echo "APP_NAME: $APP_NAME"
 exec $HOME/vendor/nginx/sbin/nginx -p $HOME -c $HOME/config/nginx.conf

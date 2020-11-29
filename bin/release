@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 # bin/release <build-dir>
 
+build_dir=$1
+bp_dir=$(cd $(dirname $0); cd ..; pwd)
+
+# Get the app name from package.json
+appName=$(cat $build_dir/package.json | $bp_dir/vendor/jq -r .name)
+export "ROOT_DIR=dist/$appName"
+echo "Serving content of '$ROOT_DIR'"
+
 cat <<EOF
 ---
 default_process_types:

@@ -15,10 +15,6 @@ unset GIT_DIR
 # Load some convenience functions like status(), echo(), and indent()
 source $bp_dir/bin/common.sh
 
-# Set the app name (from package json)
-app_name=$(cat $build_dir/package.json | $bp_dir/vendor/jq -r .name)
-export "APP_NAME=$app_name"
-
 export_env_dir $env_dir
 build_env=${APP_ENV:-production}
 
@@ -89,7 +85,8 @@ curl $nginx_url -s -o - | tar xzf - -C $build_dir/vendor
 mkdir $build_dir/vendor/nginx
 cd $build_dir/vendor/nginx-$nginx_version
 ./configure --with-pcre=$build_dir/vendor/pcre-${pcre_version} --with-pcre-opt="--prefix=$build_dir/vendor/pcre" --with-http_ssl_module --prefix=$build_dir/vendor/nginx 2>&1 | indent
-make install  2>&1 | indent
+# make install  2>&1 | indent
+make install | indent
 cd $build_dir
 
 # If node_modules directory is checked into source control then
@@ -111,22 +108,12 @@ elif test -d $cache_dir/node/node_modules; then
   fi
 fi
 
-# TODO: remove
-# Restore bower_components from cache if it exists
-#if test -d $build_dir/bower_components; then
-#  status "Found existing bower_components directory; skipping cache"
-#elif test -d $cache_dir/bower_components; then
-#  status "Restoring bower_components directory from cache"
-#  cp -r $cache_dir/bower_components $build_dir/
-#fi
-
 status "Installing yarn"
 npm install yarn --quiet --userconfig $build_dir/.npmrc 2>&1 | indent
 PATH=$build_dir/node_modules/yarn/bin:$PATH
 
 status "Installing dependencies"
 # Make npm output to STDOUT instead of its default STDERR
-# npm install --quiet --userconfig $build_dir/.npmrc 2>&1 | indent
 yarn install | indent
 
 # Add the project's binaries to the PATH
@@ -159,3 +146,6 @@ rm -rf "$build_dir/.npm"
 
 status "Building application $build_env distribution"
 yarn build --configuration $build_env | indent
+
+status "Cleaning workspace"
+rm -rf $build_dir/node_modules
