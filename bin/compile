@@ -120,11 +120,12 @@ fi
 #  cp -r $cache_dir/bower_components $build_dir/
 #fi
 
-status "Installing yarn which is required by other dependencies"
+status "Installing yarn"
 npm install yarn --quiet --userconfig $build_dir/.npmrc 2>&1 | indent
 PATH=$build_dir/node_modules/yarn/bin:$PATH
 
 status "Installing dependencies"
+# TODO: use yarn here?
 # Make npm output to STDOUT instead of its default STDERR
 npm install --quiet --userconfig $build_dir/.npmrc 2>&1 | indent
 
@@ -159,4 +160,4 @@ rm -rf "$build_dir/.npm"
 yarn install --silent | indent
 
 status "Building application $build_env distribution"
-yarn build --environment $build_env | indent
+yarn build --configuration $build_env | indent
