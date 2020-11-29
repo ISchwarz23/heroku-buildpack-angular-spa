@@ -17,7 +17,7 @@ source $bp_dir/bin/common.sh
 
 # Set the app name (from package json)
 app_name=$(cat $build_dir/package.json | $bp_dir/vendor/jq -r .name)
-echo $app_name > $env_dir/APP_NAME
+export "APP_NAME=$app_name"
 
 export_env_dir $env_dir
 build_env=${APP_ENV:-production}
@@ -125,9 +125,9 @@ npm install yarn --quiet --userconfig $build_dir/.npmrc 2>&1 | indent
 PATH=$build_dir/node_modules/yarn/bin:$PATH
 
 status "Installing dependencies"
-# TODO: use yarn here?
 # Make npm output to STDOUT instead of its default STDERR
-npm install --quiet --userconfig $build_dir/.npmrc 2>&1 | indent
+# npm install --quiet --userconfig $build_dir/.npmrc 2>&1 | indent
+yarn install | indent
 
 # Add the project's binaries to the PATH
 PATH=$build_dir/node_modules/.bin:$PATH
@@ -156,8 +156,6 @@ cp -r $build_dir/.heroku $cache_dir/node
 status "Cleaning up node-gyp and npm artifacts"
 rm -rf "$build_dir/.node-gyp"
 rm -rf "$build_dir/.npm"
-
-yarn install --silent | indent
 
 status "Building application $build_env distribution"
 yarn build --configuration $build_env | indent
